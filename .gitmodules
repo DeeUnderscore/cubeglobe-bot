@@ -1,0 +1,4 @@
+[submodule "cubeglobe"]
+	path = cubeglobe
+	url = https://github.com/DeeUnderscore/cubeglobe.git
+	branch = master

@@ -1,0 +1,28 @@
+[bot]
+# Map size, in blocks per edge
+map_size = 32
+
+# Noise function frequencies. Lower values give flatter terrain. Randomized
+# between min and max for each map generated. 
+min_frequency = 0.01
+max_frequency = 0.04
+
+# maximum height of the soil layer. Actual height determined by noise function.
+layer_height = 9
+
+# Minimum soil level. Actual picked by RNG. There is no soil above the soil
+# level.
+min_soil_cutoff = 30
+
+# Maximum water level. Actual picked by RNG. All empty space below water level
+# is filled by water.
+max_water_level = 15
+
+
+[credentials]
+# fill these out with the oauth credentials for your instance
+token = "aaa"
+client_id = "bbb"
+client_secret = "ccc" 
+redirect = "urn:ietf:wg:oauth:2.0:oob"
+base = "http://localhost"
