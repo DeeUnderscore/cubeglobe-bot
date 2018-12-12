@@ -11,6 +11,7 @@ extern crate toml;
 extern crate failure_derive;
 extern crate chrono;
 extern crate rand;
+extern crate oxipng;
 
 use std::fs::{create_dir_all, read, read_to_string, File};
 use std::io::{BufReader, Write};
@@ -304,6 +305,14 @@ fn main() {
             .expect("Failed to initalize the images subdirectory");
         let mut image_data: Vec<u8> = Vec::new();
         write_surface_as_png(&surf, image_data.by_ref()).expect("Unable to generate png");
+        
+        image_data = match oxipng::optimize_from_memory(&image_data, &oxipng::Options::from_preset(4)) {
+            Ok(new_image) => new_image,
+            Err(e) => {
+                eprintln!("Failed to optimize PNG, falling back to unoptimized: {}", e);
+                image_data 
+            }
+        };
 
         {
             let mut outfile = File::create(&filename).expect("Unable to create image file");
@@ -362,6 +371,14 @@ fn main() {
                     .expect("Failed to initalize the images subdirectory");
                 let mut new_image = Vec::new();
                 write_surface_as_png(&surf, new_image.by_ref()).expect("Unable to generate png");
+
+                new_image = match oxipng::optimize_from_memory(&new_image, &oxipng::Options::from_preset(4)) {
+                    Ok(optimized) => optimized,
+                    Err(e) => {
+                        eprintln!("Failed to optimize PNG, falling back to unoptimized: {}", e);
+                        new_image
+                    }
+                };
 
                 {
                     let mut outfile = File::create(&filename).expect("Unable to create image file");
