@@ -262,7 +262,7 @@ fn get_backoff(attempt: usize) -> u64 {
 
 fn main() {
     let matches = App::new("cubeglobe-bot")
-        .version("0.1.0")
+        .version("0.1.1")
         .arg(
             Arg::with_name("config")
                 .short("c")
