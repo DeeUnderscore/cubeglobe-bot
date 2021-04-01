@@ -3,12 +3,12 @@ extern crate cubeglobe;
 extern crate elefren;
 #[macro_use]
 extern crate serde_derive;
-extern crate failure;
+extern crate anyhow;
 extern crate image;
 extern crate serde;
 extern crate toml;
 #[macro_use]
-extern crate failure_derive;
+extern crate thiserror;
 extern crate chrono;
 extern crate rand;
 extern crate oxipng;
@@ -25,7 +25,7 @@ use chrono::Duration as ChrDuration;
 use clap::{App, Arg};
 use elefren::Data as MastoData;
 use elefren::{Mastodon, MastodonClient, MediaBuilder, StatusBuilder};
-use failure::Error;
+use anyhow::Error;
 use image::{ImageError, ImageOutputFormat};
 use rand::{thread_rng, Rng};
 
@@ -157,7 +157,7 @@ impl State {
     }
 
     /// Post new status, with `image`
-    fn post_status<I>(&self, masto: &Mastodon, image: I) -> Result<(), Error>
+    fn post_status<I>(&self, masto: &Mastodon, image: I) -> Result<(), PostingError>
     where
         I: Read + Send + 'static,
     {
@@ -210,17 +210,23 @@ fn generate_image<'a>(
     renderer.render_map(&map)
 }
 
-#[derive(Fail, Debug)]
+#[derive(Error, Debug)]
 pub enum ImageConvertError {
-    #[fail(display = "SDL error: {}", _0)]
+    #[error("SDL error: {0}")]
     SdlError(String),
-    #[fail(display = "Error loading image: {}", _0)]
-    ImageError(#[fail(cause)] ImageError),
+    #[error("Error loading image: {0}")]
+    ImageError(#[from] ImageError),
 }
 
-#[derive(Fail, Debug)]
-#[fail(display = "function called while in incorrect state")]
+#[derive(Error, Debug)]
+#[error("function called while in incorrect state")]
 pub struct BadStateError(String);
+
+#[derive(Error, Debug)]
+pub enum PostingError {
+    #[error("Elefren returned an arror: {0}")]
+    ElefrenError(#[from] elefren::Error),
+}
 
 /// Take a surface and write to to writer `out`, as PNG
 fn write_surface_as_png<W: Write>(surf: &Surface, mut out: W) -> Result<(), Error> {

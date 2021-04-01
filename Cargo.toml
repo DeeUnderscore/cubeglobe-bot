@@ -13,8 +13,8 @@ serde = "1.0.80"
 serde_derive = "1.0.80"
 toml = "0.4.8"
 image = "0.20.1"
-failure = "0.1.3"
-failure_derive = "0.1.3"
+anyhow = "1.0"
+thiserror = "1.0"
 chrono = { version = "0.4.6", features = [ "serde" ] }
 rand = "0.5.5"
 elefren = { git = "https://github.com/DeeUnderscore/elefren.git", branch = "media-builder" } # ⚠ flakiness alert!
