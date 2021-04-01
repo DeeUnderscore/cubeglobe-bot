@@ -19,4 +19,4 @@ thiserror = "1.0"
 chrono = { version = "0.4.6", features = [ "serde" ] }
 rand = "0.5.5"
 elefren = { git = "https://github.com/DeeUnderscore/elefren.git", tag = "v0.22.0-mediabuilder" } # ⚠ flakiness alert!
-oxipng = "2.1.8"
+oxipng = "4.0"
