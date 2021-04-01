@@ -2,6 +2,7 @@
 name = "cubeglobe-bot"
 version = "0.1.1"
 authors = ["D Anzorge <d.anzorge@gmail.com>"]
+edition = "2015"
 
 [features]
 sdlbundled = [ "cubeglobe/bundled" ]
