@@ -19,6 +19,7 @@ use std::io::{Cursor, Read, Seek};
 use std::path::{Path, PathBuf};
 use std::thread::sleep;
 use std::time::Duration as StdDuration;
+use std::sync::Arc;
 
 use chrono::prelude::*;
 use chrono::Duration as ChrDuration;
@@ -161,17 +162,19 @@ impl State {
     where
         I: Read + Send + 'static,
     {
-        let attachment = masto.new_media(MediaBuilder {
+        let attachment = masto.media(MediaBuilder {
             description: Some(IMAGE_TITLE.to_string()),
             mimetype: Some("image/png".to_string()),
             filename: Some(format!("{}.png", self.id)),
             ..MediaBuilder::from_reader(image)
-        })?;
-        let status = masto.new_status(StatusBuilder {
-            media_ids: Some(vec![attachment.id.parse::<u64>()?]),
-            visibility: Some(elefren::status_builder::Visibility::Public),
-            ..StatusBuilder::new(POST_BODY.to_string())
-        })?;
+        }).map_err(PostingError::ElefrenError)?;
+        let status = masto.new_status(
+            StatusBuilder::new()
+            .status(POST_BODY.to_string())
+            .media_ids(vec![attachment.id])
+            .visibility(elefren::status_builder::Visibility::Public)
+            .build().map_err(PostingError::ElefrenError)?
+        ).map_err(PostingError::ElefrenError)?;
 
         eprintln!("New status posted at: {}", status.uri);
 
@@ -341,7 +344,7 @@ fn main() {
 
         state.posted().persist().expect("Unable to persist state");
     } else {
-        let mut current_image: Option<Vec<u8>> = None;
+        let mut current_image: Option<Arc<[u8]>> = None;
         let mut attempt: usize = 0;
 
         loop {
@@ -399,7 +402,7 @@ fn main() {
                         .expect("Something went terribly wrong figuring out the image filename")
                 );
 
-                current_image = Some(new_image);
+                current_image = Some(new_image.into());
                 state = state.generated();
                 state.persist().expect("Unable to persist state");
             }
@@ -409,13 +412,11 @@ fn main() {
                     state
                         .get_saved_image()
                         .expect("Wanted to retry uploading image but was unable to open its file")
+                        .into()
                 });
 
                 attempt += 1;
-                // TODO: Figure out a way to use a reader here that can share memory here OR see if
-                // giving elefren a variant that uses reqwest's bytes() could help us avoid a clone
-                // here somehow 
-                let result = state.post_status(&fedi, Cursor::new(image_data.clone())); // 😬
+                let result = state.post_status(&fedi, Cursor::new(image_data.clone())); 
 
                 match result {
                     Ok(_) => {
@@ -429,7 +430,7 @@ fn main() {
                         let backoff = get_backoff(attempt);
                         eprintln!("Retrying after {} seconds", backoff);
                         sleep(StdDuration::from_secs(backoff));
-                        current_image = Some(image_data);
+                        current_image = Some(image_data.clone());
                     }
                 }
             }
